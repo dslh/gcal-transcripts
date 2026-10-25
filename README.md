@@ -78,7 +78,9 @@ Every command has its own help: `gcal-transcripts help pull`, or
   markdown files in `--out`, and skips events it finds there, so renaming a
   file is safe. `--force` fetches them again.
 - **Scripting.** `pull` prints each saved path on stdout and everything else
-  on stderr; `list --json` gives the same rows as JSON. The exit status is 0
+  on stderr; `list --json` gives the same rows as JSON,
+  adding each event's organizer and guests (as in the front matter) and its
+  transcript Docs, so you can check who was in a meeting before pulling it. The exit status is 0
   on success, 1 if anything failed, 2 for a usage mistake and 3 when you need
   to sign in again.
 

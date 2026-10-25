@@ -124,7 +124,8 @@ type listOpts struct {
 func (o *listOpts) flags() *flag.FlagSet {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	o.register(fs)
-	fs.BoolVar(&o.json, "json", false, "print JSON instead of a table")
+	fs.BoolVar(&o.json, "json", false,
+		"print JSON instead of a table, adding each event's organizer, guests and transcript Docs")
 	return fs
 }
 
@@ -157,8 +158,27 @@ type listRow struct {
 	Start       string    `json:"start"`
 	Status      string    `json:"status"`
 	SavedAs     string    `json:"saved_as,omitempty"`
+	Organizer   string    `json:"organizer,omitempty"`
+	Attendees   []string  `json:"attendees"`
 	Transcripts []listDoc `json:"transcripts"`
 	display     string    // the start, for the table
+}
+
+// newListRow describes an event for list, with the guests in the same form
+// as a saved file's front matter, so they can be checked before pulling.
+func newListRow(ev gapi.Event, docs []gapi.Attachment, savedAs string) listRow {
+	r := listRow{ID: ev.ID, Title: ev.Summary, Start: ev.Start.String(), display: when(ev), SavedAs: savedAs,
+		Attendees: []string{}}
+	if ev.Organizer.Email != "" {
+		r.Organizer = transcript.PersonLabel(ev.Organizer)
+	}
+	for _, p := range transcript.Guests(ev) {
+		r.Attendees = append(r.Attendees, transcript.PersonLabel(p))
+	}
+	for _, a := range docs {
+		r.Transcripts = append(r.Transcripts, listDoc{Title: a.Title, URL: a.FileURL})
+	}
+	return r
 }
 
 type listDoc struct {
@@ -194,10 +214,7 @@ func runList(ctx context.Context, args []string) error {
 	sem := make(chan struct{}, 4)
 	for i, ev := range events {
 		docs := transcript.Find(ev, o.anyDoc)
-		rows[i] = listRow{ID: ev.ID, Title: ev.Summary, Start: ev.Start.String(), display: when(ev), SavedAs: saved[ev.ID]}
-		for _, a := range docs {
-			rows[i].Transcripts = append(rows[i].Transcripts, listDoc{Title: a.Title, URL: a.FileURL})
-		}
+		rows[i] = newListRow(ev, docs, saved[ev.ID])
 		if rows[i].SavedAs != "" {
 			rows[i].Status = "saved"
 			continue

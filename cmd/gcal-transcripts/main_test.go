@@ -1,10 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"slices"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/dslh/gcal-transcripts/internal/gapi"
 )
 
 func TestParseArgsInterspersed(t *testing.T) {
@@ -46,6 +50,29 @@ func TestParseWhen(t *testing.T) {
 		if _, err := parseWhen(bad, now, false); err == nil {
 			t.Errorf("parseWhen(%q) succeeded", bad)
 		}
+	}
+}
+
+func TestListRowGuests(t *testing.T) {
+	ev := gapi.Event{
+		ID:        "e",
+		Organizer: gapi.Person{Email: "anna@example.com", DisplayName: "Anna"},
+		Attendees: []gapi.Person{
+			{Email: "anna@example.com", DisplayName: "Anna"},
+			{Email: "ben@other.example"},
+			{Email: "room@resource.calendar.google.com", Resource: true},
+		},
+	}
+	r := newListRow(ev, nil, "")
+	if r.Organizer != "Anna <anna@example.com>" {
+		t.Errorf("organizer = %q", r.Organizer)
+	}
+	if !slices.Equal(r.Attendees, []string{"Anna <anna@example.com>", "ben@other.example"}) {
+		t.Errorf("attendees = %q, want the people without the room", r.Attendees)
+	}
+	data, _ := json.Marshal(newListRow(gapi.Event{ID: "solo"}, nil, ""))
+	if !strings.Contains(string(data), `"attendees":[]`) || strings.Contains(string(data), "organizer") {
+		t.Errorf("an event without guests encodes as %s", data)
 	}
 }
 

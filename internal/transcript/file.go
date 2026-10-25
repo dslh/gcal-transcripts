@@ -76,12 +76,12 @@ func Render(ev gapi.Event, docs []Doc, tab string, exported time.Time) []byte {
 	fmt.Fprintf(&b, "start: %s\n", q(ev.Start.String()))
 	fmt.Fprintf(&b, "end: %s\n", q(ev.End.String()))
 	if ev.Organizer.Email != "" {
-		fmt.Fprintf(&b, "organizer: %s\n", q(person(ev.Organizer)))
+		fmt.Fprintf(&b, "organizer: %s\n", q(PersonLabel(ev.Organizer)))
 	}
 	if guests := Guests(ev); guests != nil {
 		b.WriteString("attendees:\n")
 		for _, p := range guests {
-			fmt.Fprintf(&b, "  - %s\n", q(person(p)))
+			fmt.Fprintf(&b, "  - %s\n", q(PersonLabel(p)))
 		}
 	}
 	b.WriteString("transcripts:\n")
@@ -119,7 +119,8 @@ func Guests(ev gapi.Event) []gapi.Person {
 	return people
 }
 
-func person(p gapi.Person) string {
+// PersonLabel is "Name <address>", or just the address when Google has no name.
+func PersonLabel(p gapi.Person) string {
 	if p.DisplayName == "" {
 		return p.Email
 	}
