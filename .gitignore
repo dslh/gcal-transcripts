@@ -1,0 +1,5 @@
+bin/
+dist/
+# OAuth client files downloaded from Google Cloud
+client_secret*.json
+credentials.json
