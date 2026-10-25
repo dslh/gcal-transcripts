@@ -30,8 +30,11 @@ It's a single binary with no runtime dependencies, for macOS, Linux and Windows.
 macOS, with [Homebrew](https://brew.sh):
 
 ```sh
+brew trust --cask dslh/tap/gcal-transcripts
 brew install --cask dslh/tap/gcal-transcripts
 ```
+
+Homebrew asks for the `brew trust` step for casks from third-party taps.
 
 Windows, with [Scoop](https://scoop.sh):
 
